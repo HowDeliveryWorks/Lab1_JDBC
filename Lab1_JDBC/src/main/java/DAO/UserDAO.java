@@ -13,5 +13,7 @@ public interface UserDAO
     User readByName(String userName);
     boolean update(String userName, String key, String newValue);
     boolean delete(String userName);
+
+    //need for tests
     void dropDB();
 }
