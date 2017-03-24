@@ -1,6 +1,6 @@
 package DAO;
 
-import Data.User;
+import Data.Order;
 import com.google.gson.Gson;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -9,21 +9,24 @@ import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.set;
 
-public class MonoDbUserDAO implements UserDAO
-{
+/**
+ * Created by LevelNone on 23.03.2017.
+ */
+public class MongoDBOrderDAO implements OrderDAO {
     private static MongoClient mongoClient;
 
     private String dbName = "Magazine";
-    private String tableName = "Users";
+    private String tableName = "Orders";
 
     private Gson gson = new Gson();
     private MongoCollection<Document> collection;
 
-    public MonoDbUserDAO(){
+    public MongoDBOrderDAO(){
         if(mongoClient == null){
             mongoClient = new MongoClient( "localhost" , 27017 );
         }
@@ -31,11 +34,12 @@ public class MonoDbUserDAO implements UserDAO
         MongoDatabase database = mongoClient.getDatabase(dbName);
         collection = database.getCollection(tableName);
     }
-    public boolean create(User user)
-    {
+
+    @Override
+    public boolean create(Order order) {
         try {
-            if(readByName(user.getLogin()) != null) return false;
-            Document doc = Document.parse(gson.toJson(user));
+            if(readByUUID(order.getUuid()) != null) return false;
+            Document doc = Document.parse(gson.toJson(order));
             collection.insertOne(doc);
             return true;
         }
@@ -45,13 +49,13 @@ public class MonoDbUserDAO implements UserDAO
         }
     }
 
-    public ArrayList<User> readAll()
-    {
-        ArrayList<User> res = new ArrayList<User>();
+    @Override
+    public ArrayList<Order> readAll() {
+        ArrayList<Order> res = new ArrayList<Order>();
         MongoCursor<Document> cursor = collection.find().iterator();
         try {
             while (cursor.hasNext()) {
-                res.add(gson.fromJson(cursor.next().toJson(), User.class));
+                res.add(gson.fromJson(cursor.next().toJson(), Order.class));
             }
         } finally {
             cursor.close();
@@ -59,11 +63,11 @@ public class MonoDbUserDAO implements UserDAO
         return res;
     }
 
-    public User readByName(String userName)
-    {
+    @Override
+    public Order readByUUID(UUID uuid) {
         try{
-            Document doc = collection.find(eq("login", userName)).first();
-            return gson.fromJson(doc.toJson(), User.class);
+            Document doc = collection.find(eq("uuid", uuid.toString())).first();
+            return gson.fromJson(doc.toJson(), Order.class);
         }
         catch (Exception ex){
             System.out.println(ex.getMessage());
@@ -71,21 +75,19 @@ public class MonoDbUserDAO implements UserDAO
         }
     }
 
-    public boolean update(String userName, String key, String newValue)
-    {
+    @Override
+    public boolean update(UUID uuid, String key, String newValue) {
         try {
-            return collection.updateOne(eq("login", userName), set(key, newValue)).isModifiedCountAvailable();
-        }
-        catch (Exception ex){
+            return collection.updateOne(eq("uuid", uuid.toString()), set(key, newValue)).isModifiedCountAvailable();
+        } catch (Exception ex) {
             System.out.println(ex.getMessage());
             return false;
         }
     }
-
-    public boolean delete(String userName)
-    {
+    @Override
+    public boolean delete(UUID uuid) {
         try {
-            collection.deleteOne(eq("login", userName));
+            collection.deleteOne(eq("uuid", uuid.toString()));
             return true;
         }
         catch (Exception ex){
@@ -94,7 +96,8 @@ public class MonoDbUserDAO implements UserDAO
         }
     }
 
-    public void dropDB(){
-        mongoClient.dropDatabase("TestDB");
+    @Override
+    public void dropDB() {
+
     }
 }

@@ -1,33 +1,32 @@
 package DAO;
 
-import Data.User;
+import Data.Order;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.UUID;
 
-public class MySQLDAO implements UserDAO
-{
+/**
+ * Created by LevelNone on 24.03.2017.
+ */
+public class MySQLOrderDAO implements OrderDAO {
     private static final String DRIVER_NAME = "com.mysql.jdbc.Driver";
-    private static final String DB_URL = "jdbc:mysql://localhost/jdbc";
+    private static final String DB_URL = "jdbc:mysql://localhost/magazine";
     private static final String ID = "root";
     private static final String PASS = "0000";
 
-    private static final String DELETE = "DELETE FROM users WHERE login=?";
-    private static final String FIND_ALL = "SELECT * FROM users ORDER BY login";
-    private static final String FIND_BY_NAME = "SELECT * FROM users WHERE login=?";
-    private static final String INSERT = "INSERT INTO users(login, password) VALUES(?, ?)";
-    private static final String UPDATE = "UPDATE users SET key=? WHERE login=?";
-
-    public MySQLDAO(){
-        
-    }
+    private static final String DELETE = "DELETE FROM orders WHERE uuid=?";
+    private static final String FIND_ALL = "SELECT * FROM orders ORDER BY uuid";
+    private static final String FIND_BY_NAME = "SELECT * FROM orders WHERE uuid=?";
+    private static final String INSERT = "INSERT INTO orders(uuid, sum) VALUES(?, ?)";
+    private static final String UPDATE = "UPDATE orders SET key=? WHERE uuid=?";
 
     private Connection getConnection() {
         try {
             Class.forName(DRIVER_NAME);
             return DriverManager.getConnection(DB_URL, ID, PASS);
         } catch (Exception e) {
-             e.printStackTrace();
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -53,17 +52,16 @@ public class MySQLDAO implements UserDAO
         }
     }
 
-    //work
-    public boolean create(User user)
-    {
+    @Override
+    public boolean create(Order order) {
         Connection conn = null;
         PreparedStatement stmt = null;
 
         try {
             conn = getConnection();
             stmt = conn.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-            stmt.setString(1, user.getLogin());
-            stmt.setString(2, user.getPassword());
+            stmt.setString(1, order.getUuid().toString());
+            stmt.setInt(2, order.getSum());
 
             stmt.executeUpdate();
 
@@ -79,11 +77,11 @@ public class MySQLDAO implements UserDAO
         }
     }
 
-    public ArrayList<User> readAll()
-    {
+    @Override
+    public ArrayList<Order> readAll() {
         Connection conn = null;
         PreparedStatement stmt = null;
-        ArrayList<User> list = new ArrayList<User>();
+        ArrayList<Order> list = new ArrayList<Order>();
 
         try {
             conn = getConnection();
@@ -91,10 +89,10 @@ public class MySQLDAO implements UserDAO
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                User user = new User();
-                user.setLogin(rs.getString("login"));
-                user.setPassword(rs.getString("password"));
-                list.add(user);
+                Order order = new Order();
+                order.setUuid(java.util.UUID.fromString(rs.getString("uuid")));
+                order.setSum(rs.getInt("sum"));
+                list.add(order);
             }
         } catch (SQLException e) {
             // e.printStackTrace();
@@ -107,24 +105,24 @@ public class MySQLDAO implements UserDAO
         return list;
     }
 
-    public User readByName(String userName)
-    {
+    @Override
+    public Order readByUUID(UUID uuid) {
         Connection conn = null;
         PreparedStatement stmt = null;
 
         try {
             conn = getConnection();
             stmt = conn.prepareStatement(FIND_BY_NAME);
-            stmt.setString(1, userName);
+            stmt.setString(1, uuid.toString());
 
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                User user = new User();
-                user.setLogin(rs.getString("login"));
-                user.setPassword(rs.getString("password"));
+                Order order = new Order();
+                order.setUuid(java.util.UUID.fromString(rs.getString("uuid")));
+                order.setSum(rs.getInt("sum"));
 
-                return user;
+                return order;
             } else {
                 return null;
             }
@@ -137,8 +135,8 @@ public class MySQLDAO implements UserDAO
         }
     }
 
-    public boolean update(String userName, String key, String newValue)
-    {
+    @Override
+    public boolean update(UUID uuid, String key, String newValue) {
         Connection conn = null;
         PreparedStatement stmt = null;
 
@@ -150,12 +148,12 @@ public class MySQLDAO implements UserDAO
             //need to set key without ' '!
             //stmt.setString(1, key);
             stmt.setString(1, newValue);
-            stmt.setString(2, userName);
+            stmt.setString(2, uuid.toString());
 
             stmt.executeUpdate();
             return true;
         } catch (SQLException e) {
-             e.printStackTrace();
+            e.printStackTrace();
             return false;
         } finally {
             close(stmt);
@@ -163,20 +161,20 @@ public class MySQLDAO implements UserDAO
         }
     }
 
-    public boolean delete(String userName)
-    {
+    @Override
+    public boolean delete(UUID uuid) {
         Connection conn = null;
         PreparedStatement stmt = null;
 
         try {
             conn = getConnection();
             stmt = conn.prepareStatement(DELETE);
-            stmt.setString(1, userName);
+            stmt.setString(1, uuid.toString());
 
             stmt.executeUpdate();
             return true;
         } catch (SQLException e) {
-             e.printStackTrace();
+            e.printStackTrace();
             return false;
             //throw new RuntimeException(e);
         } finally {
@@ -185,10 +183,8 @@ public class MySQLDAO implements UserDAO
         }
     }
 
-    public void dropDB()
-    {
+    @Override
+    public void dropDB() {
 
     }
-
-
 }

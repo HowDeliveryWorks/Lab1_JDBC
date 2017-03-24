@@ -3,9 +3,6 @@ import Data.User;
 
 import java.util.ArrayList;
 
-/**
- * Created by Tanya on 23.03.2017.
- */
 public interface UserDAO
 {
     boolean create(User user);
