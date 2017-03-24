@@ -12,8 +12,8 @@ import java.util.ArrayList;
  */
 public class MonoDbUserDAOTest
 {
-    //private UserDAO dao = new MonoDbUserDAO();
-    private UserDAO dao = new MySQLDAO();
+    private UserDAO dao = new MonoDbUserDAO();
+    //private UserDAO dao = new MySQLDAO();
 
     @Test
     public void create() throws Exception

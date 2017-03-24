@@ -1,25 +1,28 @@
 package DAO;
 
+import Data.FoodItem;
 import Data.User;
 
 import java.sql.*;
 import java.util.ArrayList;
 
-public class MySQLDAO implements UserDAO
-{
+/**
+ * Created by Tanya on 24.03.2017.
+ */
+public class MySQLFoodDAO implements FoodDAO {
     private static final String DRIVER_NAME = "com.mysql.jdbc.Driver";
-    private static final String DB_URL = "jdbc:mysql://localhost/jdbc";
+    private static final String DB_URL = "jdbc:mysql://localhost:3307/Magazine";
     private static final String ID = "root";
-    private static final String PASS = "0000";
+    private static final String PASS = "";
 
-    private static final String DELETE = "DELETE FROM users WHERE login=?";
-    private static final String FIND_ALL = "SELECT * FROM users ORDER BY login";
-    private static final String FIND_BY_NAME = "SELECT * FROM users WHERE login=?";
-    private static final String INSERT = "INSERT INTO users(login, password) VALUES(?, ?)";
-    private static final String UPDATE = "UPDATE users SET key=? WHERE login=?";
+    private static final String DELETE = "DELETE FROM FoodMenu WHERE name=?";
+    private static final String FIND_ALL = "SELECT * FROM FoodMenu ORDER BY name";
+    private static final String FIND_BY_NAME = "SELECT * FROM FoodMenu WHERE name=?";
+    private static final String INSERT = "INSERT INTO FoodMenu(name, price) VALUES(?, ?)";
+    private static final String UPDATE = "UPDATE FoodMenu SET key=? WHERE name=?";
 
-    public MySQLDAO(){
-        
+    public MySQLFoodDAO(){
+
     }
 
     private Connection getConnection() {
@@ -27,7 +30,7 @@ public class MySQLDAO implements UserDAO
             Class.forName(DRIVER_NAME);
             return DriverManager.getConnection(DB_URL, ID, PASS);
         } catch (Exception e) {
-             e.printStackTrace();
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -54,7 +57,7 @@ public class MySQLDAO implements UserDAO
     }
 
     //work
-    public boolean create(User user)
+    public boolean create(FoodItem foodItem)
     {
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -62,8 +65,8 @@ public class MySQLDAO implements UserDAO
         try {
             conn = getConnection();
             stmt = conn.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-            stmt.setString(1, user.getLogin());
-            stmt.setString(2, user.getPassword());
+            stmt.setString(1, foodItem.getName());
+            stmt.setString(2, foodItem.getPrice().toString());
 
             stmt.executeUpdate();
 
@@ -79,11 +82,11 @@ public class MySQLDAO implements UserDAO
         }
     }
 
-    public ArrayList<User> readAll()
+    public ArrayList<FoodItem> readAll()
     {
         Connection conn = null;
         PreparedStatement stmt = null;
-        ArrayList<User> list = new ArrayList<User>();
+        ArrayList<FoodItem> list = new ArrayList<FoodItem>();
 
         try {
             conn = getConnection();
@@ -91,10 +94,10 @@ public class MySQLDAO implements UserDAO
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                User user = new User();
-                user.setLogin(rs.getString("login"));
-                user.setPassword(rs.getString("password"));
-                list.add(user);
+                FoodItem foodItem = new FoodItem();
+                foodItem.setName(rs.getString("name"));
+                foodItem.setPrice(Integer.valueOf(rs.getString("price")));
+                list.add(foodItem);
             }
         } catch (SQLException e) {
             // e.printStackTrace();
@@ -107,7 +110,7 @@ public class MySQLDAO implements UserDAO
         return list;
     }
 
-    public User readByName(String userName)
+    public FoodItem readByName(String foodItemName)
     {
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -115,16 +118,16 @@ public class MySQLDAO implements UserDAO
         try {
             conn = getConnection();
             stmt = conn.prepareStatement(FIND_BY_NAME);
-            stmt.setString(1, userName);
+            stmt.setString(1, foodItemName);
 
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                User user = new User();
-                user.setLogin(rs.getString("login"));
-                user.setPassword(rs.getString("password"));
+                FoodItem foodItem = new FoodItem();
+                foodItem.setName(rs.getString("name"));
+                foodItem.setPrice(Integer.valueOf(rs.getString("price")));
 
-                return user;
+                return foodItem;
             } else {
                 return null;
             }
@@ -137,7 +140,7 @@ public class MySQLDAO implements UserDAO
         }
     }
 
-    public boolean update(String userName, String key, String newValue)
+    public boolean update(String foodItemName, String key, Integer newValue)
     {
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -149,13 +152,13 @@ public class MySQLDAO implements UserDAO
             stmt = conn.prepareStatement(temp);
             //need to set key without ' '!
             //stmt.setString(1, key);
-            stmt.setString(1, newValue);
-            stmt.setString(2, userName);
+            stmt.setString(1, newValue.toString());
+            stmt.setString(2, foodItemName);
 
             stmt.executeUpdate();
             return true;
         } catch (SQLException e) {
-             e.printStackTrace();
+            e.printStackTrace();
             return false;
         } finally {
             close(stmt);
@@ -163,7 +166,7 @@ public class MySQLDAO implements UserDAO
         }
     }
 
-    public boolean delete(String userName)
+    public boolean delete(String foodItemName)
     {
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -171,12 +174,12 @@ public class MySQLDAO implements UserDAO
         try {
             conn = getConnection();
             stmt = conn.prepareStatement(DELETE);
-            stmt.setString(1, userName);
+            stmt.setString(1, foodItemName);
 
             stmt.executeUpdate();
             return true;
         } catch (SQLException e) {
-             e.printStackTrace();
+            e.printStackTrace();
             return false;
             //throw new RuntimeException(e);
         } finally {
@@ -189,6 +192,4 @@ public class MySQLDAO implements UserDAO
     {
 
     }
-
-
 }

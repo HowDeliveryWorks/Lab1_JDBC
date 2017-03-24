@@ -1,6 +1,6 @@
 package DAO;
 
-import Data.User;
+import Data.FoodItem;
 import com.google.gson.Gson;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -13,17 +13,20 @@ import java.util.ArrayList;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.set;
 
-public class MonoDbUserDAO implements UserDAO
+/**
+ * Created by Tanya on 23.03.2017.
+ */
+public class MonoDbFoodDAO implements FoodDAO
 {
     private static MongoClient mongoClient;
 
     private String dbName = "Magazine";
-    private String tableName = "Users";
+    private String tableName = "FoodMenu";
 
     private Gson gson = new Gson();
     private MongoCollection<Document> collection;
 
-    public MonoDbUserDAO(){
+    public MonoDbFoodDAO(){
         if(mongoClient == null){
             mongoClient = new MongoClient( "localhost" , 27017 );
         }
@@ -31,11 +34,11 @@ public class MonoDbUserDAO implements UserDAO
         MongoDatabase database = mongoClient.getDatabase(dbName);
         collection = database.getCollection(tableName);
     }
-    public boolean create(User user)
+    public boolean create(FoodItem foodItem)
     {
         try {
-            if(readByName(user.getLogin()) != null) return false;
-            Document doc = Document.parse(gson.toJson(user));
+            if(readByName(foodItem.getName()) != null) return false;
+            Document doc = Document.parse(gson.toJson(foodItem));
             collection.insertOne(doc);
             return true;
         }
@@ -45,13 +48,13 @@ public class MonoDbUserDAO implements UserDAO
         }
     }
 
-    public ArrayList<User> readAll()
+    public ArrayList<FoodItem> readAll()
     {
-        ArrayList<User> res = new ArrayList<User>();
+        ArrayList<FoodItem> res = new ArrayList<FoodItem>();
         MongoCursor<Document> cursor = collection.find().iterator();
         try {
             while (cursor.hasNext()) {
-                res.add(gson.fromJson(cursor.next().toJson(), User.class));
+                res.add(gson.fromJson(cursor.next().toJson(), FoodItem.class));
             }
         } finally {
             cursor.close();
@@ -59,22 +62,23 @@ public class MonoDbUserDAO implements UserDAO
         return res;
     }
 
-    public User readByName(String userName)
+    public FoodItem readByName(String foodName)
     {
         try{
-            Document doc = collection.find(eq("login", userName)).first();
-            return gson.fromJson(doc.toJson(), User.class);
+            Document doc = collection.find(eq("name", foodName)).first();
+            return gson.fromJson(doc.toJson(), FoodItem.class);
         }
         catch (Exception ex){
             System.out.println(ex.getMessage());
+            //return null;
             return null;
         }
     }
 
-    public boolean update(String userName, String key, String newValue)
+    public boolean update(String foodName, String key, Integer newValue)
     {
         try {
-            return collection.updateOne(eq("login", userName), set(key, newValue)).isModifiedCountAvailable();
+            return collection.updateOne(eq("name", foodName), set(key, newValue)).isModifiedCountAvailable();
         }
         catch (Exception ex){
             System.out.println(ex.getMessage());
@@ -82,10 +86,10 @@ public class MonoDbUserDAO implements UserDAO
         }
     }
 
-    public boolean delete(String userName)
+    public boolean delete(String foodName)
     {
         try {
-            collection.deleteOne(eq("login", userName));
+            collection.deleteOne(eq("name", foodName));
             return true;
         }
         catch (Exception ex){
